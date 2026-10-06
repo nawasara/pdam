@@ -1,0 +1,53 @@
+{
+    "name": "nawasara/pdam",
+    "description": "Water bill lookup for the Nawasara superapp framework: proxies the PUDAM Tirta Katong billing API, serves unpaid bills to logged-in residents, and keeps the connections they save.",
+    "type": "library",
+    "license": "MIT",
+    "keywords": [
+        "nawasara",
+        "laravel",
+        "pdam",
+        "water-bill",
+        "ponorogo",
+        "citizen-api"
+    ],
+    "authors": [
+        {
+            "name": "Pringgo J. Saputro",
+            "email": "odyinggo@gmail.com",
+            "role": "Lead Developer"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/nawasara/pdam/issues",
+        "source": "https://github.com/nawasara/pdam"
+    },
+    "autoload": {
+        "psr-4": {
+            "Nawasara\\Pdam\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Nawasara\\Pdam\\Tests\\": "tests/"
+        }
+    },
+    "require": {
+        "php": "^8.1",
+        "illuminate/support": "^10.0|^12.0",
+        "nawasara/api": "*",
+        "nawasara/vault": "*"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Nawasara\\Pdam\\PdamServiceProvider"
+            ]
+        },
+        "branch-alias": {
+            "dev-main": "0.1.x-dev"
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
