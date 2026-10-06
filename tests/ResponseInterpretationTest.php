@@ -158,20 +158,30 @@ class ResponseInterpretationTest extends TestCase
         ], 200, '0506040212');
     }
 
-    /** Lunas dengan kode 00 dan daftar kosong: total 0, tidak ada tunggakan. */
-    public function test_lunas_dengan_daftar_kosong(): void
+    /**
+     * Pelanggan LUNAS. Jawaban sungguhan untuk 0806070082.
+     *
+     * `status:false` dan tanpa data pelanggan, tetapi ini kabar baik: nomornya
+     * terdaftar dan sudah dibayar. Sebelum ditangani, kasus ini jatuh ke
+     * cabang kode tak dikenal dan warga yang taat membayar membaca "layanan
+     * PDAM sedang tidak dapat dihubungi".
+     */
+    public function test_kode_08_berarti_lunas(): void
     {
         $r = $this->client()->interpret([
-            'status' => true,
-            'response_code' => '00',
-            'pelanggan' => ['nosambungan' => '0506040212', 'nama' => 'NAMA UJI', 'jml_rek' => 0],
-            'tagihan' => [],
-            'total' => 0,
-            'histori' => [],
-        ], 200, '0506040212');
+            'status' => false,
+            'response_code' => '08',
+            'response_message' => 'Tagihan tidak ditemukan atau sudah terbayar',
+            'jml_rek' => 0,
+        ], 200, '0806070082');
 
         $this->assertTrue($r['found']);
         $this->assertSame(0, $r['total_due']);
+        $this->assertSame(0, $r['unpaid_count']);
         $this->assertSame([], $r['bills']);
+        $this->assertSame([], $r['history']);
+
+        // PUDAM tidak mengirim nama untuk kasus ini; tidak dikarang.
+        $this->assertNull($r['name']);
     }
 }

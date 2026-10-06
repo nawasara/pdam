@@ -17,7 +17,7 @@ Bekerja bersama `nawasara/api` (JWT warga, pembatasan laju) dan
 | Jejak pengecekan untuk statistik | ✅ |
 | Uji koneksi dari panel Vault | ✅ |
 | Halaman admin | ⏳ belum, sengaja |
-| Bentuk jawaban untuk pelanggan yang sudah lunas | ⚠️ belum pernah terlihat, lihat di bawah |
+| Pelanggan lunas (kode `08`) | ✅ |
 
 ## Setup
 
@@ -77,7 +77,7 @@ seseorang, dan di URL ia akan tercatat di log akses dan riwayat proxy.
 
 | Status | Arti |
 |---|---|
-| 200 | ketemu |
+| 200 | ketemu; pelanggan lunas juga 200 dengan `total_due: 0`, `bills: []`, `name_masked: null` |
 | 404 | nomor tidak terdaftar |
 | 422 | nomor kosong atau bukan angka |
 | 502 | PUDAM tak terjangkau atau menolak kunci kita: "coba lagi nanti" |
@@ -122,13 +122,16 @@ tagihan rumah orang tuanya. Yang menyatakan "ini sambungan saya" adalah tabel
 `connections`. Jejak dipakai untuk statistik dan untuk mengenali satu akun yang
 mengecek ratusan nomor yang hampir semuanya `found=false`.
 
-## Yang Belum Diketahui
+**Pelanggan lunas memakai kode tersendiri, `08`, dengan `status:false`.**
+Pesannya "Tagihan tidak ditemukan atau sudah terbayar", tanpa nama maupun
+riwayat. Dijawab 200 dengan total nol, karena nomornya terdaftar (nomor yang
+tidak terdaftar memakai `03`). Menjawabnya 404 membuat warga mengira nomornya
+salah, padahal ia sudah membayar. Nama dan riwayat dikirim `null` dan kosong,
+bukan dikarang.
 
-⚠️ **Jawaban untuk pelanggan yang sudah lunas belum pernah terlihat.** Belum
-jelas apakah datang sebagai `00` dengan daftar tagihan kosong, atau dengan kode
-tersendiri. Kode yang tidak dikenal sengaja dilempar dan dilaporkan (502),
-bukan dijawab "tidak ditemukan", supaya muncul di log. Uji dengan nomor
-pelanggan yang lunas sebelum dipakai luas.
+Kode `08` ditemukan justru karena kode yang tidak dikenal dilempar dan
+dilaporkan, bukan ditelan sebagai "tidak ditemukan". Pertahankan perilaku itu:
+kode berikutnya yang belum dikenal akan muncul dengan cara yang sama.
 
 ## Roadmap
 

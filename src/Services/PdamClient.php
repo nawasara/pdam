@@ -13,7 +13,7 @@ use Nawasara\Vault\Facades\Vault;
  *   GET {base_url}/api/kominfo/tagihan/{nosambungan}
  *   X-API-KEY: <kunci>
  *
- * Bentuk jawaban diuji langsung 6 Oktober 2026. Tiga hal yang membentuk kelas
+ * Bentuk jawaban diuji langsung 6 Oktober 2026. Empat hal yang membentuk kelas
  * ini, semuanya tidak kelihatan dari dokumentasi:
  *
  * 1. GALAT DATANG DENGAN HTTP 200. Hanya kunci API yang ditolak yang memakai
@@ -30,11 +30,12 @@ use Nawasara\Vault\Facades\Vault;
  * 3. NOMOR BERTITIK DITOLAK. `05.06.040212` dijawab "tidak terdaftar". Karena
  *    itu nomor dibersihkan dari semua yang bukan angka sebelum dikirim.
  *
- * ⚠️ Jawaban untuk pelanggan yang sudah LUNAS belum pernah dilihat. Belum
- * diketahui apakah datang sebagai `00` dengan daftar tagihan kosong, atau
- * dengan kode tersendiri. Kode yang tidak dikenal sengaja dilempar sebagai
- * PdamException dan dilaporkan, supaya muncul di log dan segera ketahuan,
- * bukan diam-diam dijawab "tidak ditemukan".
+ * 4. PELANGGAN LUNAS MEMAKAI KODE SENDIRI (`08`), dengan `status:false` dan
+ *    tanpa data pelanggan. Ia ditemukan, dengan total nol. Lihat CODE_NO_BILLS.
+ *
+ * Kode lain yang belum dikenal sengaja dilempar sebagai PdamException dan
+ * dilaporkan, supaya muncul di log dan segera ketahuan, bukan diam-diam
+ * dijawab "tidak ditemukan". Begitulah kode 08 ditemukan.
  */
 class PdamClient
 {
@@ -43,6 +44,16 @@ class PdamClient
 
     /** Nomor sambungan tidak terdaftar. */
     public const CODE_NOT_FOUND = '03';
+
+    /**
+     * Nomor TERDAFTAR, tetapi tidak ada tagihan: semuanya sudah dibayar.
+     *
+     * Datang sebagai `status:false` dengan pesan "Tagihan tidak ditemukan atau
+     * sudah terbayar", tanpa data pelanggan maupun riwayat. Meski `status`-nya
+     * false, ini kabar baik: dijawab sebagai ditemukan dengan total nol.
+     * Dilihat pertama kali 6 Oktober 2026 untuk nomor 0806070082.
+     */
+    public const CODE_NO_BILLS = '08';
 
     /** Kunci API tidak valid atau tidak dikirim (datang dengan HTTP 401). */
     public const CODE_AUTH = '98';
@@ -140,6 +151,24 @@ class PdamClient
 
         if ($code === self::CODE_NOT_FOUND) {
             return ['found' => false, 'connection_number' => $number];
+        }
+
+        // Lunas. Bukan "tidak ditemukan" dan bukan galat, meski `status`-nya
+        // false: menjawab 404 membuat warga mengira nomornya salah, menjawab
+        // 502 membuatnya mengira layanan rusak, padahal ia sudah membayar.
+        //
+        // PUDAM tidak mengirim nama maupun riwayat untuk kasus ini, jadi
+        // keduanya kosong, bukan dikarang.
+        if ($code === self::CODE_NO_BILLS) {
+            return [
+                'found' => true,
+                'connection_number' => $number,
+                'name' => null,
+                'unpaid_count' => 0,
+                'bills' => [],
+                'total_due' => 0,
+                'history' => [],
+            ];
         }
 
         // Kode 99 untuk awalan nomor yang tak cocok dengan cabang mana pun
