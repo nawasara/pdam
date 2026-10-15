@@ -2,8 +2,11 @@
 
 namespace Nawasara\Pdam;
 
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use Nawasara\Pdam\Support\LookupLimits;
 use Nawasara\Pdam\Exceptions\PdamException;
 use Nawasara\Pdam\Services\PdamClient;
 
@@ -41,11 +44,28 @@ class PdamServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
+        // Limiter didaftarkan SEBELUM rute yang memakainya.
+        $this->registerLookupLimiter();
         $this->registerCitizenRoutes();
 
         $this->publishes([
             __DIR__.'/../config/nawasara-pdam.php' => config_path('nawasara-pdam.php'),
         ], 'nawasara-pdam-config');
+    }
+
+    /**
+     * Limiter khusus pengecekan nomor sambungan (audit keamanan 15 Oktober 2026,
+     * temuan S13). Batas umum 60/menit per akun terlalu longgar untuk data
+     * yang dapat dipanen dengan menebak nomor berurutan; uraiannya di
+     * LookupLimits.
+     */
+    protected function registerLookupLimiter(): void
+    {
+        RateLimiter::for('nawasara-pdam-lookup', fn (Request $request) => LookupLimits::build(
+            $request->attributes->get('citizen_sub'),
+            (string) $request->ip(),
+            (array) config('nawasara-pdam.lookup_limits', []),
+        ));
     }
 
     /**

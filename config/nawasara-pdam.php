@@ -32,4 +32,21 @@ return [
     'connections' => [
         'max_per_citizen' => (int) env('NAWASARA_PDAM_MAX_CONNECTIONS', 10),
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Batas pengecekan nomor sambungan
+    |--------------------------------------------------------------------------
+    | Audit keamanan 15 Oktober 2026, temuan S13 (enumerasi). Berlaku di atas
+    | batas umum `throttle:nawasara-citizen`. Lihat Support\LookupLimits.
+    |
+    | Per akun dikunci pada `sub` warga; per IP lebih longgar karena ribuan
+    | warga berbagi IP operator seluler. 0 = penghitung itu dimatikan.
+    */
+    'lookup_limits' => [
+        'per_hour' => (int) env('NAWASARA_PDAM_LOOKUP_PER_HOUR', 10),
+        'per_day' => (int) env('NAWASARA_PDAM_LOOKUP_PER_DAY', 30),
+        'ip_per_hour' => (int) env('NAWASARA_PDAM_LOOKUP_IP_PER_HOUR', 60),
+        'ip_per_day' => (int) env('NAWASARA_PDAM_LOOKUP_IP_PER_DAY', 300),
+    ],
 ];

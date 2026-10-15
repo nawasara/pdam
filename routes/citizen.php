@@ -16,7 +16,11 @@ use Nawasara\Pdam\Http\Api\PdamConnectionController;
 | proxy, dan riwayat peramban. Badan POST tidak.
 */
 
-Route::post('/check', PdamCheckController::class)->name('check');
+// Limiter khusus pengecekan (audit keamanan 15 Oktober 2026, S13): batas
+// per akun dan per IP, di atas batas umum. Lihat Support\LookupLimits.
+Route::post('/check', PdamCheckController::class)
+    ->middleware('throttle:nawasara-pdam-lookup')
+    ->name('check');
 
 /*
 | Nomor yang disimpan warga, supaya tidak perlu diketik ulang tiap bulan.

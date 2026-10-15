@@ -55,6 +55,23 @@ Semua di belakang JWT warga (`api.citizen`) dan `throttle:nawasara-citizen`.
 `/check` memakai POST meski hanya membaca: nomor sambungan menunjuk ke rumah
 seseorang, dan di URL ia akan tercatat di log akses dan riwayat proxy.
 
+`/check` juga dibatasi limiter khusus `throttle:nawasara-pdam-lookup` (audit
+keamanan 15 Oktober 2026, temuan S13). Batas umum 60 per menit per akun
+membiarkan satu akun gratis menebak nomor sambungan berurutan dan memanen
+tunggakan serta riwayat pemakaian air satu desa dalam semalam. Warga
+sungguhan mengecek beberapa nomor sebulan sekali, jadi batas kecil di bawah
+tidak terasa olehnya.
+
+| Env | Bawaan | |
+|---|---|---|
+| `NAWASARA_PDAM_LOOKUP_PER_HOUR` | `10` | per `sub` warga |
+| `NAWASARA_PDAM_LOOKUP_PER_DAY` | `30` | per `sub` warga |
+| `NAWASARA_PDAM_LOOKUP_IP_PER_HOUR` | `60` | per IP, lebih longgar karena NAT operator |
+| `NAWASARA_PDAM_LOOKUP_IP_PER_DAY` | `300` | per IP |
+
+`0` mematikan penghitung itu. Lewat batas, jawabannya `429` dengan `message`
+berbahasa Indonesia dan header `Retry-After`.
+
 ### Jawaban `/check`
 
 ```json
